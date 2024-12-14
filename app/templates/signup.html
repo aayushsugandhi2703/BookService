@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form action="register" method="POST">
+        {{form.hidden_tag()}}
+        <div>
+            {{ form.username.label }}
+            {{ form.username }} 
+            {% for error in form.username.errors %} 
+                {{ error }} 
+            {% endfor %}
+        </div>
+        <div>
+            {{ form.password.label }}
+            {{ form.password }} 
+            {% for error in form.password.errors %} 
+                {{ error }} 
+            {% endfor %}
+        </div>
+        <div>
+            {{ form.submit }}
+        </div>
+    </form>
+</body>
+</html>
