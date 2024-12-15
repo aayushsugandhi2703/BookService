@@ -1,4 +1,4 @@
-from flask import Flask, Blueprint, render_template, redirect, url_for, jsonify, session, flash
+from flask import Flask, Blueprint, render_template, redirect, url_for, jsonify, session, flash, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Session, Review, Book
 from app.forms import ReviewForm
@@ -9,7 +9,8 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["5 per minute"])
 
 review_bp = Blueprint('review', __name__)
 
-
+# This function and route is for the user to add a review
+@limiter.limit("5 per minute")
 @review_bp.route('/add/<int:book_id>', methods=['GET', 'POST'])
 @jwt_required()
 def add_review(book_id):
@@ -31,7 +32,7 @@ def add_review(book_id):
             )
             Session.add(new_review)
             Session.commit()
-            flash('Review added successfully')
+            current_app.logger.info(f"Review added for book {book.title}")
             return redirect(url_for('review.view_book_reviews', book_id=book.id))
         except Exception as e:
             flash(f'Review addition failed: {str(e)}')
@@ -39,6 +40,7 @@ def add_review(book_id):
 
     return render_template('review.html', form=form, book=book)
 
+# This function and route is for the user to view the reviews of a book
 @review_bp.route('/view/<int:book_id>', methods=['GET'])
 @jwt_required()
 def view_book_reviews(book_id):
@@ -59,9 +61,10 @@ def view_book_reviews(book_id):
             "description": book.description,
             "reviews": [{"id": review.id, "content": review.content} for review in book.reviews]
         }
+        current_app.logger.info(f"Book reviews fetched for book {book.title}")
         return jsonify(book_data)
     except Exception as e:
-        flash(f"Error fetching book details: {str(e)}")
+        current_app.logger.error(f"Failed to fetch book details: {str(e)}")
         return jsonify({"error": "Could not fetch book details"}), 500
     finally:
         Session.close()
