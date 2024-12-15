@@ -13,6 +13,10 @@ def add_review(book_id):
         return redirect(url_for('auth.Login'))
 
     form = ReviewForm()
+    book = Session.query(Book).get(book_id)  # Fetch the book object
+    if not book:
+        flash("Book not found.")
+        return redirect(url_for('review.view_book_reviews', book_id=book_id))
     if form.validate_on_submit():
         try:
             # Create a new review for the specific book
@@ -24,19 +28,21 @@ def add_review(book_id):
             Session.add(new_review)
             Session.commit()
             flash('Review added successfully')
-            return redirect(url_for('review.view_book_reviews', book_id=book_id))
+            return redirect(url_for('review.view_book_reviews', book_id=book.id))
         except Exception as e:
             flash(f'Review addition failed: {str(e)}')
             Session.rollback()
 
-    return render_template('review.html', form=form)
+    return render_template('review.html', form=form, book=book)
 
-@review_bp.route('/book/<int:book_id>', methods=['GET'])
+@review_bp.route('/view/<int:book_id>', methods=['GET'])
 @jwt_required()
 def view_book_reviews(book_id):
+    user_id = get_jwt_identity()
     try:
+        Session.rollback()
         # Fetch the book and its reviews
-        book = session.query(Book).filter_by(id=book_id).first()
+        book = Session.query(Book).filter_by(id=book_id).first()
 
         if not book:
             flash("Book not found")
@@ -54,6 +60,6 @@ def view_book_reviews(book_id):
         flash(f"Error fetching book details: {str(e)}")
         return jsonify({"error": "Could not fetch book details"}), 500
     finally:
-        session.close()
+        Session.close()
 
    
