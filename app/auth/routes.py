@@ -3,10 +3,15 @@ from flask_jwt_extended import create_access_token, create_refresh_token, jwt_re
 from app.models import User, Session
 from app.forms import LoginForm, RegisterForm
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address, default_limits=["5 per minute"])
 
 auth_bp = Blueprint('auth', __name__)
 
 # This function will redirect the user to the login page
+@limiter.limit("5 per minute")
 @auth_bp.route('/', methods=['GET'])
 def index():
     return redirect(url_for('auth.Login'))
@@ -34,6 +39,7 @@ def Login():
     return render_template('login.html', form=form)
 
 # This function and route is for the user to register
+@limiter.limit("5 per minute")
 @auth_bp.route('/register', methods=['GET', 'POST'])
 def Register():
     form = RegisterForm()
