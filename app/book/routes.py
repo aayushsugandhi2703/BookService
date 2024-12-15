@@ -2,10 +2,14 @@ from flask import Flask, Blueprint, render_template, redirect, url_for, jsonify,
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.models import Session, Book
 from app.forms import BookForm
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address, default_limits=["5 per minute"])
 
 book_bp = Blueprint('book', __name__)
 
-
+@limiter.limit("5 per minute")
 @book_bp.route('/add', methods=['GET', 'POST'])
 @jwt_required()
 def add():
