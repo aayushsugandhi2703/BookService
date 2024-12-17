@@ -4,6 +4,7 @@ from app.models import Session, Book, User
 from app.forms import BookForm
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from functools import lru_cache
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["5 per minute"])
 
@@ -38,7 +39,7 @@ def add():
     
     return render_template('book.html', form=form)
 
-
+@lru_cache(maxsize=50)
 @book_bp.route('/display', methods=['GET'])
 @jwt_required()
 def get_books():

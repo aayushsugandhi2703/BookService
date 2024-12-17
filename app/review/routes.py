@@ -4,6 +4,7 @@ from app.models import Session, Review, Book
 from app.forms import ReviewForm
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from functools import lru_cache
 
 limiter = Limiter(key_func=get_remote_address, default_limits=["5 per minute"])
 
@@ -41,6 +42,7 @@ def add_review(book_id):
     return render_template('review.html', form=form, book=book)
 
 # This function and route is for the user to view the reviews of a book
+@lru_cache(maxsize=50)
 @review_bp.route('/view/<int:book_id>', methods=['GET'])
 @jwt_required()
 def view_book_reviews(book_id):
@@ -64,7 +66,7 @@ def view_book_reviews(book_id):
         current_app.logger.info(f"Book reviews fetched for book {book.title}")
         return jsonify(book_data)
     except Exception as e:
-        current_app.logger.error(f"Failed to fetch book details: {str(e)}")
+        current_app.logger.error(f"Failed to fetch book details asked by user id ={user_id}: {str(e)}")
         return jsonify({"error": "Could not fetch book details"}), 500
     finally:
         Session.close()
